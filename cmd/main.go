@@ -1,25 +1,41 @@
 package main
 
 import (
-  "fmt"
+	"context"
+	"edd_agent_commission/internal/config"
+	"edd_agent_commission/internal/consumer"
+	"edd_agent_commission/internal/handler"
+	"edd_agent_commission/internal/repository"
+	"edd_agent_commission/internal/service"
+	"log"
+	"strings"
 )
 
-//TIP To run your code, right-click the code and select <b>Run</b>. Alternatively, click
-// the <icon src="AllIcons.Actions.Execute"/> icon in the gutter and select the <b>Run</b> menu item from here.
-
 func main() {
-  //TIP Press <shortcut actionId="ShowIntentionActions"/> when your caret is at the underlined or highlighted text
-  // to see how GoLand suggests fixing it.
-  s := "gopher"
-  fmt.Println("Hello and welcome, %s!", s)
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		log.Fatalf("failed to load config: %v", err)
+	}
 
-  for i := 1; i <= 5; i++ {
-	//TIP You can try debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-	// for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>. To start your debugging session, 
-	// right-click your code in the editor and select the <b>Debug</b> option. 
-	fmt.Println("i =", 100/i)
-  }
+	// PostgreSQL 연결
+	pool, err := pgxpool.Connect(context.Background(), cfg.PostgresqlDSN)
+	if err != nil {
+		log.Fatalf("failed to connect to PostgreSQL: %v", err)
+	}
+	defer pool.Close()
+
+	// 레포지토리, 서비스, 핸들러 초기화
+	commissionRepository := repository.NewCommissionRepository(pool)
+	commissionService := service.NewCommissionService(commissionRepository)
+	commissionHandler := handler.NewCommissionHandler(commissionService)
+
+	// Echo 서버 시작
+	e := echo.New()
+	e.GET("/commissions/:agentName", commissionHandler.GetCommissionsByAgentName)
+	// ... (다른 핸들러 추가)
+
+	go consumer.StartConsumer(context.Background(), strings.Split(cfg.KafkaBrokers, ","), cfg.KafkaTopic, commissionService)
+
+	// HTTP 서버 시작
+	log.Fatal(e.Start(":" + cfg.HTTPServerPort))
 }
-
-//TIP See GoLand help at <a href="https://www.jetbrains.com/help/go/">jetbrains.com/help/go/</a>.
-// Also, you can try interactive lessons for GoLand by selecting 'Help | Learn IDE Features' from the main menu.

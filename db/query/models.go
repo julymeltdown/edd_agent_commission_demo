@@ -7,11 +7,11 @@ package query
 import ()
 
 type Commission struct {
-	ID                 int32  `db:"id"`
-	InsuranceID        int64  `db:"insurance_id"`
-	Commission         int64  `db:"commission"`
-	ProductName        string `db:"product_name"`
-	InsuranceAgentName string `db:"insurance_agent_name"`
-	ApplicantName      string `db:"applicant_name"`
-	InsuredPersonName  string `db:"insured_person_name"`
+	ID                 int32
+	InsuranceID        int64
+	Commission         int64
+	ProductName        string
+	InsuranceAgentName string
+	ApplicantName      string
+	InsuredPersonName  string
 }
