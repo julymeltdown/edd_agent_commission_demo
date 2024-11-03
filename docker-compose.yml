@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password # 안전한 비밀번호로 변경
+      POSTGRES_DB: commissions_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # 데이터 지속성을 위한 볼륨 마운트
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081" # 8081 포트로 변경
+    environment:
+      POSTGRESQL_DSN: "postgres://postgres:password@postgres:5432/commissions_db?sslmode=disable"
+      KAFKA_BROKERS: "kafka:9092"
+      KAFKA_TOPIC: "insurance-application-approved"
+      HTTP_SERVER_PORT: "8081"
+    depends_on:
+      - postgres
+    volumes:
+      - .:/app
+
+volumes:
+  postgres_data:

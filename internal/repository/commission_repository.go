@@ -31,5 +31,5 @@ func (r *CommissionRepository) InsertCommission(ctx context.Context, commission 
 		ApplicantName:      commission.ApplicantName,
 		InsuredPersonName:  commission.InsuredPersonName,
 	}
-	return r.queries.InsertCommission(ctx, params) // params 구조체 전달
+	return r.queries.InsertCommission(ctx, params)
 }
